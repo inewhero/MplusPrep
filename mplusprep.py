@@ -7,7 +7,7 @@ def read_csv_with_fallback(p):
             return pd.read_csv(p, encoding=e), e
         except UnicodeDecodeError:
             pass
-    if input("\n⚠️  CSV 文件编码无法自动识别\n是否由 mplusprep 强制修复（latin1）？ [y/N]: ").lower() == "y":
+    if input("\nCSV 文件编码无法自动识别\n是否由 mplusprep 强制修复（latin1）？ [y/N]: ").lower() == "y":
         return pd.read_csv(p, encoding="latin1"), "latin1"
     raise UnicodeDecodeError("csv", b"", 0, 1, "用户拒绝自动修复")
 
@@ -75,14 +75,14 @@ def convert(inp, prefix, mode):
     mp = None
     bad = illegal_names(df.columns)
     if bad:
-        print("\n⚠️  检测到 Mplus 非法变量名：")
+        print("\n检测到 Mplus 非法变量名：")
         for v in bad:
             print(f"  - {v}")
         if input("是否由 mplusprep 自动修复变量名？ [y/N]: ").lower() != "y":
             raise ValueError("用户拒绝自动修复变量名")
         mp = sanitize_names(df.columns)
         df = df.rename(columns=mp)
-        print("\n✔ 变量名映射：")
+        print("\n变量名映射：")
         for k, v in mp.items():
             if k != v:
                 print(f"  {k} → {v}")
@@ -94,31 +94,64 @@ def convert(inp, prefix, mode):
     if mp:
         map_file = prefix + "_variable_map.csv"
         pd.DataFrame(list(mp.items()), columns=["original", "mplus"]).to_csv(map_file, index=False, encoding="utf-8-sig")
-        print(f"\n📄 变量映射表已输出: {os.path.abspath(map_file)}")
-    print("\n✅ 转换完成")
+        print(f"\n变量映射表已输出: {os.path.abspath(map_file)}")
+    print("\n转换完成")
     print(dat_abs)
     print(os.path.abspath(inp_file))
 
+def normalize_argv():
+    if len(sys.argv) == 2 and os.path.isfile(sys.argv[1]):
+        return ["mplusprep", sys.argv[1]]
+    return sys.argv
+
+
+def pause_if_exe():
+    if getattr(sys, 'frozen', False):
+        input("\n按回车键退出...")
+
+
 def main():
-    p = argparse.ArgumentParser(prog="mplusprep", description="Prepare Mplus mediation / moderated mediation models")
-    p.add_argument("input", help="csv / xlsx / sav 数据文件")
+    argv = normalize_argv()
+
+    p = argparse.ArgumentParser(
+        prog="mplusprep",
+        description="Prepare Mplus mediation / moderated mediation models"
+    )
+    p.add_argument("input", nargs="?", help="csv / xlsx / sav 数据文件")
     p.add_argument("-m", action="store_true", help="简单中介模型（默认）")
     p.add_argument("-w", action="store_true", help="调节的中介模型")
     p.add_argument("-o", help="输出文件前缀")
-    args = p.parse_args()
+
+    args = p.parse_args(argv[1:])
+
+    if not args.input:
+        p.print_help()
+        pause_if_exe()
+        return
+
     if args.m and args.w:
         raise ValueError("不能同时使用 -m 和 -w")
+
     mode = "w" if args.w else "m"
-    infile = args.input.lstrip("-")
+    infile = args.input
+
     if not os.path.exists(infile):
         raise FileNotFoundError(f"找不到文件: {infile}")
+
     prefix = args.o if args.o else os.path.splitext(os.path.basename(infile))[0]
     convert(infile, prefix, mode)
+
 
 if __name__ == "__main__":
     try:
         main()
     except Exception as e:
-        print(f"\n❌ 错误: {e}\n")
-        argparse.ArgumentParser().print_help()
+        print(f"\n错误: {e}\n")
+        print("示例：")
+        print("  mplusprep data.csv")
+        print("  mplusprep data.xlsx -w")
+        print("  mplusprep data.sav -o output")
+        pause_if_exe()
         sys.exit(1)
+    else:
+        pause_if_exe()

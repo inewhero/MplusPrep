@@ -1,2 +1,80 @@
 # MplusPrep
-Turn CSV/Excel/SPSS into ready-to-run Mplus mediation or moderated-mediation syntax in one command.
+
+🌍 English (Brief)
+
+Turn **CSV / Excel (.xlsx/.xls) / SPSS (.sav)** into ready-to-run Mplus syntax for
+
+- **simple mediation** (X → M → Y)
+- **moderated mediation** (X → M → Y, moderated by W)
+
+in **one command**.
+
+```
+# simple mediation (default)
+mplusprep.exe mydata.csv -o model_m
+
+# moderated mediation
+mplusprep.exe mydata.xlsx -o model_w -w
+```
+
+---
+
+**MplusPrep** 是一个轻量、绿色、无需配置环境的小工具，用于将**CSV / Excel (.xlsx | .xls) / SPSS (.sav)**  
+**一行命令**转换为 **可直接运行的 Mplus 模型文件**。
+
+支持的模型类型：
+
+- **简单中介模型**：X → M → Y  
+- **有调节的中介模型**：X → M → Y（调节变量 W）
+
+自动生成以下文件：
+
+- 📄 **`.dat`**：Mplus 标准数据文件（空格分隔、无表头）
+- 🧠 **`.inp`**：完整、可运行的 Mplus 语法脚手架
+- 🔁 **`_variable_map.csv`**：原始变量名 → Mplus 合法变量名映射表（如发生自动修复）
+
+## ✨ 特点
+
+- 🚀 **一行命令即可运行**
+- 🧩 自动生成 **中介 / 调节中介模型语法**
+- 🔤 自动检测并修复 **Mplus 非法变量名**（可交互确认）
+- 🌍 兼容 **中文数据与编码环境**
+- 📦 单文件可执行（无需 Python / 依赖环境）
+- 📊 输出即跑（Mplus 直接打开 `.inp`）
+
+## 🚀 快速开始（Windows）
+
+### 1️⃣ 下载可执行文件
+
+前往 👉 [Releases](https://github.com/inewhero/mplusprep/releases)  
+
+下载 **`mplusprep.exe`（Windows 64 位）**，并将其放置在 **数据文件所在目录**。
+
+### 2️⃣ 一行命令生成模型
+
+#### 简单中介模型（默认）
+
+```
+mplusprep.exe mydata.csv -o model_m
+```
+
+#### 有调节的中介模型（W 调节 X→M）
+
+```
+mplusprep.exe mydata.xlsx -o model_w -w
+```
+
+生成文件示例：
+
+```
+model_m.dat
+model_m.inp
+model_m_variable_map.csv   （如发生变量名修复）
+```
+
+## 注意事项
+
+- 默认使用 **前 3 个变量**作为 X, M, Y
+- 调节中介使用 **前 4 个变量**作为 X, M, Y, W
+- 如变量名不符合 Mplus 规范，将提示是否自动修复
+- 所有修改均可通过 `_variable_map.csv` 追溯
